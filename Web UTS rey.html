@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Ibadah | UTS Muhammad Raihan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #1a2a2a;
+            --bg-card: #243b3b;
+            --accent-gold: #c5a059;
+            --text-main: #e2e8f0;
+            --glass-border: rgba(197, 160, 89, 0.2);
+        }
+
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; }
+        
+        body { 
+            background: radial-gradient(circle at top right, #2c4a4a, #1a2a2a); 
+            min-height: 100vh; margin: 0; color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .container { 
+            width: 100%; max-width: 1200px; margin: 0 auto; padding: 20px; 
+            height: 100vh; display: flex; flex-direction: column;
+        }
+
+        header { margin-bottom: 20px; text-align: center; flex-shrink: 0; }
+        .header-icons { display: flex; justify-content: center; gap: 15px; font-size: 35px; color: var(--accent-gold); }
+        h1 { margin:0; color: var(--accent-gold); font-size: 24px; text-transform: uppercase; font-weight: 800; }
+        .sub-title { opacity: 0.7; font-size: 12px; color: #e0c08d; }
+
+        #main-content {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            margin-bottom: 100px;
+        }
+
+        section {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease;
+        }
+
+        section.active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        .card { background: var(--bg-card); border-radius: 30px; border: 1px solid var(--glass-border); padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin-bottom: 15px; }
+
+        /* QURAN */
+        #hal-quran.active { display: grid; grid-template-columns: 280px 1fr; gap: 15px; }
+        @media (max-width: 768px) { #hal-quran.active { grid-template-columns: 1fr; } }
+        .surah-list, .ayah-container { height: 100%; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 25px; padding: 15px; border: 1px solid var(--glass-border); }
+
+        .arabic { font-size: 28px; text-align: right; color: var(--accent-gold); line-height: 2.5; margin-bottom: 10px; direction: rtl; }
+        .latin-text { font-size: 14px; color: #e0c08d; font-style: italic; margin-bottom: 5px; }
+        .indo-text { font-size: 13px; opacity: 0.7; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+
+        /* NAV BAR */
+        .nav-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 380px; background: rgba(36, 59, 59, 0.95); backdrop-filter: blur(15px); border-radius: 100px; display: flex; justify-content: space-around; align-items: center; padding: 12px; border: 1px solid var(--glass-border); z-index: 9999; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        .nav-link { color: #557a7a; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; cursor: pointer; }
+        .nav-link.active { color: var(--accent-gold); }
+        .center-add { background: var(--accent-gold); color: #1a2a2a !important; width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-top: -50px; border: 5px solid var(--bg-deep); font-size: 22px !important; }
+
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: 30px; padding: 30px; border: 1px solid var(--accent-gold); max-height: 85vh; overflow-y: auto; }
+
+        .guide-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; overflow-y: auto; }
+        .guide-item { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px; border: 1px solid var(--glass-border); cursor: pointer; text-align: center; }
+
+        #chart-container { display: flex; align-items: flex-end; justify-content: space-around; height: 180px; width: 100%; border-bottom: 1px solid var(--glass-border); margin-top: 15px; }
+        .bar { width: 30px; background: var(--accent-gold); border-radius: 8px 8px 0 0; min-height: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="modal-guide" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2 id="modal-title" style="color:var(--accent-gold); border-bottom:1px solid var(--glass-border); padding-bottom:10px;"></h2>
+        <div id="modal-body" style="margin-top:20px; line-height: 1.8;"></div>
+        <button onclick="closeModal()" style="margin-top:30px; width:100%; padding:12px; background:var(--accent-gold); border:none; border-radius:15px; font-weight:800; cursor:pointer; color:#1a2a2a;">TUTUP</button>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <div class="header-icons"><i class="fa-solid fa-mosque"></i> <i class="fa-solid fa-book-quran"></i></div>
+        <h1>Monitoring Ibadah</h1>
+        <p class="sub-title">Tugas UTS Muhammad Raihan</p>
+    </header>
+
+    <div id="main-content">
+        <section id="hal-dashboard" class="active">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div class="card"><p style="font-size: 10px; color:var(--accent-gold);">TOTAL REKAM</p><div id="dash-total" style="font-size: 30px; font-weight: 800;">0</div></div>
+                <div class="card" style="text-align: center;"><p style="font-size: 10px; color:var(--accent-gold);">SHOLAT</p><div id="val-sholat" style="font-size: 30px; font-weight: 800;">0%</div></div>
+                <div class="card"><i class="fa-solid fa-quote-right" style="opacity: 0.2;"></i><p style="font-size: 10px; font-style: italic;">Tetaplah bersujud walau belum terwujud. Jika sudah terwujud jangan lupa bersujud. Perbaiki sholatmu maka Allah akan perbaiki hidupmu.</p></div>
+            </div>
+
+            <h3 style="color:var(--accent-gold); font-size: 14px; margin-bottom: 15px; text-transform: uppercase;"><i class="fa-solid fa-star-and-crescent"></i> Panduan Tata Cara Sholat</h3>
+
+            <div class="guide-container">
+                <div class="guide-item" onclick="openGuide('niat')"><h4>Niat 5 Waktu</h4></div>
+                <div class="guide-item" onclick="openGuide('takbir')"><h4>Takbir & Fatihah</h4></div>
+                <div class="guide-item" onclick="openGuide('rukuk')"><h4>Rukuk & I'tidal</h4></div>
+                <div class="guide-item" onclick="openGuide('sujud')"><h4>Sujud & Duduk</h4></div>
+                <div class="guide-item" onclick="openGuide('tahiyat')"><h4>Tahiyat & Salam</h4></div>
+                <div class="guide-item" onclick="openGuide('doa')"><h4>Doa Selesai</h4></div>
+            </div>
+        </section>
+
+        <section id="hal-quran">
+            <div class="surah-list" id="surah-container"></div>
+            <div class="ayah-container" id="ayah-container">
+                <p style="text-align: center; margin-top: 150px; opacity: 0.2;">Pilih Surah untuk membaca.</p>
+            </div>
+        </section>
+
+        <section id="hal-stats" style="justify-content: center; align-items: center;">
+            <div class="card" style="width: 100%; max-width: 550px;">
+                <h3 style="color:var(--accent-gold); text-align: center;">PROGRES 7 HARI</h3>
+                <div id="chart-container"></div>
+            </div>
+        </section>
+
+        <section id="hal-tambah" style="justify-content: center; align-items: center;">
+            <div class="card" style="width: 100%; max-width: 400px;">
+                <h3 style="color:var(--accent-gold); text-align: center; margin-bottom: 20px;">SIMPAN AMALAN</h3>
+                <input type="text" id="inp-nama" placeholder="Keterangan hari ini" style="background:#1a2a2a; color:white; border:1px solid var(--glass-border); padding:12px; width:100%; border-radius:12px; margin-bottom:12px;">
+                <input type="date" id="inp-tgl" style="background:#1a2a2a; color:white; border:1px solid var(--glass-border); padding:12px; width:100%; border-radius:12px;">
+                <button onclick="simpanAmalan()" style="width: 100%; padding: 15px; background: var(--accent-gold); border: none; border-radius: 15px; font-weight: 800; cursor: pointer; margin-top: 15px; color: #1a2a2a;">SIMPAN</button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<nav class="nav-bar">
+    <div class="nav-link active" onclick="pindah('dashboard')" id="nav-dashboard"><i class="fa-solid fa-house"></i><span>HOME</span></div>
+    <div class="nav-link" onclick="pindah('quran')" id="nav-quran"><i class="fa-solid fa-book-quran"></i><span>JUZ 30</span></div>
+    <div class="nav-link center-add" onclick="pindah('tambah')"><i class="fa-solid fa-plus"></i></div>
+    <div class="nav-link" onclick="pindah('stats')" id="nav-stats"><i class="fa-solid fa-chart-line"></i><span>STATS</span></div>
+</nav>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('db_rehan_uts_fix_total')) || [];
+
+    const guides = {
+        'niat': {
+            title: 'Niat Sholat Fardhu 5 Waktu',
+            body: `
+                <div style="margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                    <h5 style="color:var(--accent-gold); margin:0 0 5px 0;">1. Subuh (2 Rakaat)</h5>
+                    <div class="arabic">أُصَلِّى فَرْضَ الصُّبْح رَكْعَتَيْنِ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلّٰهِ تَعَالَى</div>
+                    <p class="latin-text">Ushalli fardhash-shubhi rak'ataini mustaqbilal qiblati adaa-an lillaahi ta'aalaa.</p>
+                </div>
+                <div style="margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                    <h5 style="color:var(--accent-gold); margin:0 0 5px 0;">2. Zuhur (4 Rakaat)</h5>
+                    <div class="arabic">أُصَلِّى فَرْضَ الظُّهْرِ أَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلّٰهِ تَعَالَى</div>
+                    <p class="latin-text">Ushalli fardhaz-zhuhri arba'a raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aalaa.</p>
+                </div>
+                <div style="margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                    <h5 style="color:var(--accent-gold); margin:0 0 5px 0;">3. Asar (4 Rakaat)</h5>
+                    <div class="arabic">أُصَلِّى فَرْضَ الْعَصْرِ أَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلّٰهِ تَعَالَى</div>
+                    <p class="latin-text">Ushalli fardhal-'ashri arba'a raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aalaa.</p>
+                </div>
+                <div style="margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                    <h5 style="color:var(--accent-gold); margin:0 0 5px 0;">4. Maghrib (3 Rakaat)</h5>
+                    <div class="arabic">أُصَلِّى فَرْضَ الْمَغْرِبِ ثَلَاثَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلّٰهِ تَعَالَى</div>
+                    <p class="latin-text">Ushalli fardhal-maghribi thalaatha raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aalaa.</p>
+                </div>
+                <div>
+                    <h5 style="color:var(--accent-gold); margin:0 0 5px 0;">5. Isya (4 Rakaat)</h5>
+                    <div class="arabic">أُصَلِّى فَرْضَ الْعِشَاءِ أَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلّٰهِ تَعَالَى</div>
+                    <p class="latin-text">Ushalli fardhal-'isyaa-i arba'a raka'aatim mustaqbilal qiblati adaa-an lillaahi ta'aalaa.</p>
+                </div>`
+        },
+        'takbir': {
+            title: 'Takbir, Iftitah & Al-Fatihah',
+            body: `
+                <div class="arabic" style="text-align:left; font-size:22px;">اللّٰهُ أَكْبَرُ</div>
+                <p class="latin-text">Allahu Akbar</p>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">Doa Iftitah (Lengkap):</h5>
+                <div class="arabic" style="text-align:left; font-size:18px; line-height:1.8;">اللّٰهُ أَكْبَرُ كَبِيْرًا وَالْحَمْدُ لِلّٰهِ كَثِيْرًا وَسُبْحَانَ اللّٰهِ بُكْرَةً وَأَصِيْلًا. وَجَّهْتُ وَجْهِيَ لِلَّذِيْ فَطَرَ السَّمَاوَاتِ وَالْأَرْضَ حَنِيْفًا مُسْلِمًا وَمَا أَنَا مِنَ الْمُشْرِكِيْنَ</div>
+                <p class="latin-text" style="font-size:12px;">Allahu akbar kabiiraw walhamdu lillaahi kathiiraw wa subhaanallaahi bukraw wa asiilaa. Wajjahtu wajhiya lilladzii fatharas-samaawaati wal ardha haniifam muslimaw wa maa ana minal musyrikiin.</p>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">Al-Fatihah (Lengkap):</h5>
+                <div class="arabic" style="text-align:left; font-size:18px; line-height:1.8;">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ (١) اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ (٢) الرَّحْمٰنِ الرَّحِيْمِ (٣) مٰلِكِ يَوْمِ الدِّيْنِ (٤) اِيَّاكَ نَعْبُدُ وَاِيَّاكَ نَسْتَعِيْنُ (٥) اِهْدِنَا الصِّرَاطَ الْمُسْتَقِيْمَ (٦) صِرَاطَ الَّذِيْنَ اَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوْبِ عَلَيْهِمْ وَلَا الضَّاۤلِّيْنَ (٧)</div>
+                <p class="latin-text" style="font-size:12px;">Bismillaahir-rahmaanir-rahiim. Alhamdu lillaahi rabbil-'aalamiin. Ar-rahmaanir-rahiim. Maaliki yaumid-diin. iyyaaka na'budu wa iyyaaka nasta'iin. Ihdinas-shiraathal-mustaqiim. Shiraathal-ladziina an'amta 'alaihim ghairil-maghdzuubi 'alaihim walad-dhaalliin.</p>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">Contoh Surah Pendek (Al-Ikhlas):</h5>
+                <div class="arabic" style="text-align:left; font-size:18px; line-height:1.8;">قُلْ هُوَ اللّٰهُ اَحَدٌ (١) اَللّٰهُ الصَّمَدُ (٢) لَمْ يَلِدْ وَلَمْ يُولَدْ (٣) وَلَمْ يَكُنْ لَّهُ كُفُوًا اَحَدٌ (٤)</div>
+                <p class="latin-text">Qul huwallaahu ahad. Allaahus-samad. Lam yalid wa lam yuulad. Wa lam yakul lahuu kufuwan ahad.</p>
+                `
+        },
+        'rukuk': {
+            title: 'Rukuk & I\'tidal',
+            body: `
+                <h5 style="color:var(--accent-gold);">Rukuk (3x):</h5>
+                <div class="arabic" style="text-align:left; font-size:20px;">سُبْحَانَ رَبِّيَ الْعَظِيمِ وَبِحَمْدِهِ</div>
+                <p class="latin-text">Subhaana rabbiyal 'azhiimi wa bihamdihi.</p>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">I'tidal (Lengkap):</h5>
+                <div class="arabic" style="text-align:left; font-size:20px;">سَمِعَ اللّٰهُ لِمَنْ حَمِدَهُ</div>
+                <p class="latin-text">Sami'allaahu liman hamidah.</p>
+                <div class="arabic" style="text-align:left; font-size:20px; margin-top:10px;">رَبَّنَا لَكَ الْحَمْدُ مِلْءُ السَّمَواتِ وَمِلْءُ الْأَرْضِ وَمِلْءُ مَا شِئْتَ مِنْ شَيْءٍ بَعْدُ</div>
+                <p class="latin-text" style="font-size:12px;">Rabbanaa lakal hamdu mil'us-samawati wa mil'ul-ardh wa mil'u maa syi'ta min syai'in ba'du.</p>`
+        },
+        'sujud': {
+            title: 'Sujud & Duduk Antara 2 Sujud',
+            body: `
+                <h5 style="color:var(--accent-gold);">Sujud (3x):</h5>
+                <div class="arabic" style="text-align:left; font-size:20px;">سُبْحَانَ رَبِّيَ الْأَعْلَى وَبِحَمْدِهِ</div>
+                <p class="latin-text">Subhaana rabbiyal a'laa wa bihamdihi.</p>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">Duduk Antara Dua Sujud:</h5>
+                <div class="arabic" style="text-align:left; font-size:18px; line-height:1.8;">رَبِّ اغْفِرْ لِي وَارْحَمْنِي وَاجْبُرْنِي وَارْفَعْنِي وَارْزُقْنِي وَاهْدِنِي وَعَافِنِي وَاعْفُ عَنِّي</div>
+                <p class="latin-text" style="font-size:12px;">Rabbighfirlii warhamnii wajburnii warfa'nii warzuqnii wahdinii wa'aafinii wa'fu 'annii.</p>`
+        },
+        'tahiyat': {
+            title: 'Tahiyat Awal & Akhir',
+            body: `
+                <h5 style="color:var(--accent-gold);">Tahiyat Akhir & Shalawat Ibrahimiyah:</h5>
+                <div class="arabic" style="text-align:left; font-size:17px; line-height:1.8;">التَّحِيَّاتُ الْمُبَارَكَاتُ الصَّلَوَاتُ الطَّيِّبَاتُ لِلَّهِ. اَلسَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ. اَلسَّلَامُ عَلَيْنَا وَعَلَى عِبَادِ اللَّهِ الصَّالِحِيْنَ. أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا اللَّهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا رَسُولُ اللَّهِ... اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ إِنَّكَ hَمِيدٌ مَجِيدٌ</div>
+                <p class="latin-text" style="font-size:11px;">Attahiyyaatul mubaarakatus shalawaatut thayyibaatu lillaah...</p>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">Salam:</h5>
+                <p style="font-size:12px;">Menoleh ke kanan lalu ke kiri sambil mengucap: <b>Assalaamu 'alaikum warahmatullaah.</b></p>`
+        },
+        'doa': {
+            title: 'Doa Selesai Sholat',
+            body: `
+                <h5 style="color:var(--accent-gold);">Istighfar (3x):</h5>
+                <div class="arabic" style="text-align:left; font-size:20px;">أَسْتَغْفِرُ اللهَ الْعَظِيْمَ</div>
+                <hr style="opacity:0.1; margin:15px 0;">
+                <h5 style="color:var(--accent-gold);">Doa Sapu Jagad:</h5>
+                <div class="arabic" style="text-align:left; font-size:20px; line-height:1.8;">رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ</div>
+                <p class="latin-text">Rabbanaa aatinaa fid-dun-yaa hasanataw wa fil aakhirati hasanataw wa qinaa 'adzaaban-naar.</p>
+                <p style="font-size:12px; opacity:0.7;">"Ya Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat, dan lindungilah kami dari azab neraka."</p>`
+        }
+    };
+
+    function openGuide(key) {
+        document.getElementById('modal-title').innerText = guides[key].title;
+        document.getElementById('modal-body').innerHTML = guides[key].body;
+        document.getElementById('modal-guide').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modal-guide').style.display = 'none'; }
+
+    function pindah(target) {
+        document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+        document.getElementById('hal-'+target).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        if(target !== 'tambah') document.getElementById('nav-'+target).classList.add('active');
+        if(target === 'quran') loadSurah();
+        if(target === 'stats') renderStats();
+        updateDashboard();
+    }
+
+    async function loadSurah() {
+        const container = document.getElementById('surah-container');
+        if(container.innerHTML !== "") return;
+        const res = await fetch('https://equran.id/api/v2/surat');
+        const data = await res.json();
+        data.data.filter(s => s.nomor >= 78).forEach(s => {
+            container.innerHTML += `<div onclick="loadAyat(${s.nomor})" style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; display:flex; justify-content:space-between;"><span>${s.nomor}. ${s.namaLatin}</span><span>${s.nama}</span></div>`;
+        });
+    }
+
+    async function loadAyat(n) {
+        const container = document.getElementById('ayah-container');
+        container.innerHTML = '<p style="text-align:center; margin-top:100px;">Membuka Surah...</p>';
+        const res = await fetch(`https://equran.id/api/v2/surat/${n}`);
+        const data = await res.json();
+        const s = data.data;
+        container.innerHTML = `<h2 style="text-align:center; color:var(--accent-gold); margin-bottom:20px;">${s.namaLatin}</h2>`;
+        s.ayat.forEach(a => {
+            container.innerHTML += `<div class="arabic">${a.teksArab}</div><div class="latin-text">${a.teksLatin}</div><div class="indo-text">${a.teksIndonesia}</div>`;
+        });
+        container.scrollTop = 0;
+    }
+
+    function simpanAmalan() {
+        const ket = document.getElementById('inp-nama').value;
+        const tgl = document.getElementById('inp-tgl').value;
+        if(!ket || !tgl) return alert('Lengkapi data!');
+        db.push({id: Date.now(), ket, tgl, status: 1});
+        localStorage.setItem('db_rehan_uts_fix_total', JSON.stringify(db));
+        pindah('dashboard');
+    }
+
+    function updateDashboard() {
+        document.getElementById('dash-total').innerText = db.length;
+        document.getElementById('val-sholat').innerText = db.length > 0 ? '100%' : '0%';
+        document.getElementById('bar-sholat').style.width = db.length > 0 ? '100%' : '0%';
+    }
+
+    function renderStats() {
+        const container = document.getElementById('chart-container');
+        container.innerHTML = '';
+        const display = [...Array(6).fill({status:0}), ...db].slice(-7);
+        display.forEach(day => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = day.status ? '100%' : '5%';
+            container.appendChild(bar);
+        });
+    }
+
+    updateDashboard();
+</script>
+</body>
+</html>
